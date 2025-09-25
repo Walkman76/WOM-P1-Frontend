@@ -1,5 +1,5 @@
-//const usersURL = "https://wom-p1.onrender.com/users"
-const usersURL = "http://localhost:6969/users"
+const usersURL = "https://wom-p1.onrender.com/users"
+//const usersURL = "http://localhost:6969/users"
 const notesURL = "https://projektvisualboard.onrender.com"
 
 const token = localStorage.getItem('token');
@@ -67,7 +67,7 @@ async function login() {
 function logout() {
   localStorage.removeItem("token");
   alert("Utloggad!");
-  window.location.href = "noteboard.html"; // till login/startsida
+  window.location.href = "login.html"; // till login/startsida
 }
 
 function loadNotes() {
