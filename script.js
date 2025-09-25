@@ -4,7 +4,7 @@ const notesURL = "https://projektvisualboard.onrender.com"
 
 const token = localStorage.getItem('token');
 
-// === Registrera ny användare ===
+//Registrera
 async function register() {
   const username = document.getElementById("register-username").value;
   const password = document.getElementById("register-password").value;
@@ -31,7 +31,7 @@ async function register() {
   }
 }
 
-// === Logga in användare ===
+//Logga in
 async function login() {
   const username = document.getElementById("login-username").value;
   const password = document.getElementById("login-password").value;
@@ -63,7 +63,7 @@ async function login() {
   }
 }
 
-// === Logga ut ===
+//Logga ut
 function logout() {
   localStorage.removeItem("token");
   alert("Utloggad!");
