@@ -11,19 +11,24 @@
     <h1>Notes App</h1>
 
     <div>
-      <button id="logoutBtn" type="button">Logga ut</button>
+      <button id="logoutBtn" onclick="logout()"type="button">Logga ut</button>
     </div>
 
     <div id="notes-section">
       <h2>Dina Notes</h2>
 
-      <label for="board-select">Board:</label>
-      <select id="board-select"></select>
+      <select id="board-select">
+        <option value="">Välj en board</option>
+        <option value="board-a">Board A</option>
+        <option value="board-b">Board B</option>
+      </select>
 
       <input id="new-note" type="text" placeholder="Ny note..." />
 
      
       <button id="createNoteBtn" type="button" onclick="createNote()">Skapa note</button>
+
+      <div id="notes-container" style="position:relative; width:100%; height:600px;"></div>
 
       <ul id="notes-list"></ul>
     </div>

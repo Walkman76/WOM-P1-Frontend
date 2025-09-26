@@ -2,6 +2,13 @@
 const usersURL = "https://wom-p1.onrender.com/users";         // Del 1
 const notesURL = "https://projektvisualboard.onrender.com";    // Del 2
 
+
+window.onload = () => {
+  fetchNotes()
+}
+  
+
+
 // AUTH
 
 async function register() {
@@ -71,23 +78,78 @@ function logout() {
 
 
 // =Skapa en note
+
+async function loadBoards() {
+  const token = localStorage.getItem('token')
+  const res = await fetch(`${apiURL}/boards`, {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+
+  const boards = await res.json()
+  const select = document.getElementById('board-select')
+
+  boards.forEach(board => {
+    const option = document.getElementById('option')
+    option.value = board._id
+    option.textContent = board.title
+    select.appendChild(option)
+  });
+}
+
+async function fetchNotes() {
+  try {
+    const res = await fetch(`${notesURL}/notes`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      } 
+    })
+
+    if (!res.ok) {
+      throw new Error('Kunde inte hämta notes')
+    }
+
+    const notes = await res.json()
+
+    const notesContainer = document.getElementById('notes-container')
+    notesContainer.innerHTML =''
+
+    notes.forEach(note => {
+      console.log(note.id, note.x, note.y)
+      const noteDiv = document.createElement('div')
+      noteDiv.className = 'note'
+      noteDiv.style.backgroundColor = note.color
+      noteDiv.style.position = 'absolute'
+      noteDiv.style.left = note.x + 'px'
+      noteDiv.style.top = note.y + 'px'
+      noteDiv.textContent = note.content
+      notesContainer.appendChild(noteDiv)
+    })
+  } catch (error) {
+    console.error(error)
+    alert('Fel vid hämtning av notes')
+  }
+}
+
 async function createNote() {
+
+  const boardId = document.getElementById('board-select')?.value;
+  const content = document.getElementById('new-note').value.trim();
   const token = localStorage.getItem('token');
+
   if (!token) {
     alert('Du är inte inloggad.');
     window.location.href = 'login.html';
     return;
   }
-
-  const boardId = document.getElementById('board-select')?.value;
-  const content = document.getElementById('new-note').value.trim();
-
   if (!content) {
     alert('Skriv något först!');
     return;
   }
-
+  
   try {
+
     const res = await fetch(`${notesURL}/notes`, {
       method: 'POST',
       headers: {
@@ -97,11 +159,11 @@ async function createNote() {
       body: JSON.stringify({
         boardId,
         content,
-        x: 100,
-        y: 100,
+        x: Math.floor(Math.random() * 400) + 50,
+        y: Math.floor(Math.random() * 400) + 50,
         color: '#ffd972'
       })
-    });
+    })
 
     const text = await res.text();
     if (!res.ok) {
@@ -109,11 +171,12 @@ async function createNote() {
     }
 
     alert('Note skapad!');
-    document.getElementById('new-note').value = '';
   } catch (err) {
     console.error('Create note error:', err);
     alert(err.message);
   }
 }
+
+
 
 
