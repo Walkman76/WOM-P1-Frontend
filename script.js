@@ -67,134 +67,53 @@ function logout() {
   window.location.href = "login.html";
 }
 
-// Hjälpfunktion för att hämta token och hantera icke-inloggad användare
 
-function getToken() {
-  const t = localStorage.getItem('token');
-  if (!t) {
+
+
+// =Skapa en note
+async function createNote() {
+  const token = localStorage.getItem('token');
+  if (!token) {
     alert('Du är inte inloggad.');
     window.location.href = 'login.html';
-  }
-  return t;
-}
-
-function escapeHtml(s='') {
-  return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-}
-
-// Ladda boards och notes 
-
-document.addEventListener('DOMContentLoaded', async () => {
-  const onNotes = location.pathname.endsWith('/notes.html') || location.pathname.endsWith('notes.html');
-  if (!onNotes) return;
-
-  await loadBoards();
-  await loadNotes();
-
-  const sel = document.getElementById('board-select');
-  if (sel) sel.addEventListener('change', loadNotes);
-});
-
-// Hämta boards som användaren får se
-
-async function loadBoards() {
-  const res = await fetch(`${notesURL}/notes/boards`, {
-    headers: { Authorization: `Bearer ${getToken()}` }
-  });
-  if (!res.ok) {
-    const txt = await res.text();
-    alert(`Kunde inte hämta boards: ${res.status} ${txt}`);
     return;
   }
-  const boards = await res.json();
-  const sel = document.getElementById('board-select');
-  if (!sel) return;
 
-  sel.innerHTML = boards.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
-  if (!sel.value && boards.length) sel.value = boards[0].id;
-}
-
-// Hämta notes 
-
-async function loadNotes() {
-  const token = getToken();
-  const sel = document.getElementById('board-select');
-  const boardId = sel ? sel.value : undefined;
-
-  const url = boardId
-    ? `${notesURL}/notes?boardId=${encodeURIComponent(boardId)}`
-    : `${notesURL}/notes`;
-
-  const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-  if (!res.ok) {
-    const txt = await res.text();
-    alert(`Kunde inte hämta notes: ${res.status} ${txt}`);
-    return;
-  }
-  const notes = await res.json();
-
-  const list = document.getElementById('notes-list');
-  list.innerHTML = '';
-  notes.forEach(n => {
-    const li = document.createElement('li');
-    li.innerHTML = `
-      <input value="${escapeHtml(n.content)}" onchange="updateNote('${n.id}', this.value)" />
-      <button onclick="deleteNote('${n.id}')">Ta bort</button>
-    `;
-    list.appendChild(li);
-  });
-}
-
-// Skapa note 
-
-async function createNote() {
-  const token = getToken();
   const boardId = document.getElementById('board-select')?.value;
   const content = document.getElementById('new-note').value.trim();
-  if (!content) return;
 
-  const res = await fetch(`${notesURL}/notes`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`
-    },
-    body: JSON.stringify({ boardId, content, x: 100, y: 100, color: '#ffd972' })
-  });
-  if (!res.ok) {
-    const txt = await res.text();
-    alert(`Kunde inte skapa note: ${res.status}\n${txt}`);
+  if (!content) {
+    alert('Skriv något först!');
     return;
   }
-  document.getElementById('new-note').value = '';
-  loadNotes();
-}
 
-// Uppdatera note 
-async function updateNote(id, newContent) {
-  const res = await fetch(`${notesURL}/notes/${encodeURIComponent(id)}`, {
-    method: 'PATCH',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${getToken()}`
-    },
-    body: JSON.stringify({ content: newContent })
-  });
-  if (!res.ok) {
-    const txt = await res.text();
-    alert(`Kunde inte uppdatera note: ${res.status}\n${txt}`);
+  try {
+    const res = await fetch(`${notesURL}/notes`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        boardId,
+        content,
+        x: 100,
+        y: 100,
+        color: '#ffd972'
+      })
+    });
+
+    const text = await res.text();
+    if (!res.ok) {
+      throw new Error(`Kunde inte skapa note: ${res.status} - ${text}`);
+    }
+
+    alert('Note skapad!');
+    document.getElementById('new-note').value = '';
+  } catch (err) {
+    console.error('Create note error:', err);
+    alert(err.message);
   }
 }
 
-// Ta bort note
-async function deleteNote(id) {
-  const res = await fetch(`${notesURL}/notes/${encodeURIComponent(id)}`, {
-    method: 'DELETE',
-    headers: { Authorization: `Bearer ${getToken()}` }
-  });
-  if (!res.ok && res.status !== 204) {
-    const txt = await res.text();
-    alert(`Kunde inte radera note: ${res.status}\n${txt}`);
-  }
-  loadNotes();
-}
+
