@@ -71,23 +71,9 @@ function logout() {
 
 
 // =Skapa en note
-async function createNote() {
-  const token = localStorage.getItem('token');
-  if (!token) {
-    alert('Du är inte inloggad.');
-    window.location.href = 'login.html';
-    return;
-  }
 
-  const boardId = document.getElementById('board-select')?.value;
-  const content = document.getElementById('new-note').value.trim();
 
-  if (!content) {
-    alert('Skriv något först!');
-    return;
-  }
-
-  try {
+ try {
     const res = await fetch(`${notesURL}/notes`, {
       method: 'POST',
       headers: {
@@ -114,6 +100,22 @@ async function createNote() {
     console.error('Create note error:', err);
     alert(err.message);
   }
+
+
+async function createNote() {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    alert('Du är inte inloggad.');
+    window.location.href = 'login.html';
+    return;
+  }
+
+  const boardId = document.getElementById('board-select')?.value;
+  const content = document.getElementById('new-note').value.trim();
+
+  if (!content) {
+    alert('Skriv något först!');
+    return;
+  }
+
 }
-
-
