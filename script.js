@@ -178,5 +178,3 @@ async function createNote() {
 }
 
 
-
-
