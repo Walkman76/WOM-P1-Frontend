@@ -171,6 +171,8 @@ async function createNote() {
     }
 
     alert('Note skapad!');
+    fetchNotes();
+
   } catch (err) {
     console.error('Create note error:', err);
     alert(err.message);
