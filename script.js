@@ -117,5 +117,4 @@ async function createNote() {
     alert('Skriv något först!');
     return;
   }
-
 }
