@@ -134,6 +134,7 @@ async function fetchNotes() {
       const id = note.id || note._id;
 
       const noteDiv = document.createElement("div");
+      noteDiv.addEventListener("mousedown", startDrag);
       noteDiv.id = `note-${id}`;
       noteDiv.className = "note";
       noteDiv.style.backgroundColor = note.color || "#ffd972";
@@ -161,12 +162,6 @@ async function fetchNotes() {
       noteDiv.appendChild(delBtn);
 
       notesContainer.appendChild(noteDiv);
-
-      const notes = document.querySelectorAll('.note')
-
-      notes.forEach(note => {
-      note.addEventListener("mousedown", startDrag)
-})
     });
   } catch (error) {
     console.error(error);
@@ -273,7 +268,7 @@ function onDrag(e) {
   draggedNote.style.top = `${e.clientY- offsetY}px`
 } 
 
-function stopDrag(e) {
+async function stopDrag(e) {
   if(!draggedNote) return
 
   document.removeEventListener("mousemove", onDrag)
@@ -282,19 +277,30 @@ function stopDrag(e) {
   const noteId = draggedNote.dataset.id
   const newX = parseInt(draggedNote.style.left)
   const newY = parseInt(draggedNote.style.top)
+  
+  try {
+    const res = await fetch(`${notesURL}/notes/${noteId}/position`, {
+      method: "POST",
+      headers: { 
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`
 
-  fetch(`${notesURL}/notes/${noteId}/position`, {
-    method: "POST",
-    headers: { 
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${localStorage.getItem("token")}`
+      },
+      body: JSON.stringify({ x: newX, y: newY })
+    });
+    if (!res.ok) {
+      const msg = await res.text()
+      throw new Error(`Kunde inte spara position: ${res.status} - ${msg}`)
+    }
 
-    },
-    body: JSON.stringify({ x: newX, y: newY })
-  });
+    console.log(`Position sparad: ${noteId} (${newX}, ${newY})`)
 
-  draggedNote = null;
-
+    } catch (err) {
+      console.error("Fel vid sparandet av position")
+      alert("Kunde inte spara position, ladda om sidan")
+    }
+    draggedNote = null;
+  
 }
 
 
