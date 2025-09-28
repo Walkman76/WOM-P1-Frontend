@@ -323,7 +323,7 @@ async function deleteNote(id) {
     return;
   }
 
-  if (!confirm('Radera den här lappen?')) return;
+  if (!confirm('Radera den här noten?')) return;
 
   try {
     const res = await fetch(`${notesURL}/notes/${encodeURIComponent(id)}`, {
