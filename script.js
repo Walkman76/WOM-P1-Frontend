@@ -1,6 +1,6 @@
 // API URLs
-const usersURL = "https://wom-p1.onrender.com/users";         // Auth service
-const notesURL = "https://projektvisualboard.onrender.com";    // Notes service
+const usersURL = "https://wom-p1.onrender.com/users";         // Auth 
+const notesURL = "https://projektvisualboard.onrender.com";    // Notes 
 
 
 window.onload = () => {
@@ -88,12 +88,12 @@ async function loadBoards() {
     });
 
     if (!res.ok) {
-      // If boards endpoint doesn't exist, just skip silently
+      
       return;
     }
 
     const boards = await res.json();
-    // Keep the first "Välj en board" option, then add dynamic ones
+   
     boards.forEach((board) => {
       const option = document.createElement("option");
       option.value = board._id || board.id || board.slug || board.title || "";
@@ -148,7 +148,7 @@ async function fetchNotes() {
       contentEl.textContent = note.content || "";
       noteDiv.appendChild(contentEl);
 
-      // Delete button (inside the loop, has access to the correct id)
+      // Delete button 
       const delBtn = document.createElement("button");
       delBtn.className = "delete-btn";
       delBtn.type = "button";
@@ -205,10 +205,10 @@ async function createNote() {
       throw new Error(`Kunde inte skapa note: ${res.status} - ${errText}`);
     }
 
-    // Re-render notes so the new one appears
+   
     await fetchNotes();
 
-    // Clear input
+   
     const input = document.getElementById("new-note");
     if (input) input.value = "";
     alert("Note skapad!");
