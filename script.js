@@ -299,8 +299,7 @@ async function stopDrag(e) {
     console.log(`Position sparad: ${noteId} (${newX}, ${newY})`)
 
     } catch (err) {
-      console.error("Fel vid sparandet av position")
-      alert("Kunde inte spara position, ladda om sidan")
+      
     }
     draggedNote = null;
   
