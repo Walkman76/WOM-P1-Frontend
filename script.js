@@ -219,6 +219,8 @@ async function createNote() {
   }
 }
 
+//Delet note
+
 async function deleteNote(id) {
   const token = localStorage.getItem("token");
   if (!token) {
