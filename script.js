@@ -1,15 +1,18 @@
-// API URL:er
-const usersURL = "https://wom-p1.onrender.com/users";         // Del 1
-const notesURL = "https://projektvisualboard.onrender.com";    // Del 2
+// API URLs
+const usersURL = "https://wom-p1.onrender.com/users";         // Auth service
+const notesURL = "https://projektvisualboard.onrender.com";    // Notes service
 
-
+// Run on page load (safe if notes page isn't shown)
 window.onload = () => {
-  fetchNotes()
-}
-  
+  // Only try fetching notes if the notes container exists (i.e., on notes.html)
+  if (document.getElementById("notes-container")) {
+    fetchNotes();
+  }
+};
 
-
-// AUTH
+/* =========================
+   AUTH
+========================= */
 
 async function register() {
   const username = document.getElementById("register-username").value;
@@ -17,9 +20,9 @@ async function register() {
 
   try {
     const res = await fetch(`${usersURL}/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password })
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password }),
     });
 
     const contentType = res.headers.get("content-type") || "";
@@ -43,9 +46,9 @@ async function login() {
 
   try {
     const res = await fetch(`${usersURL}/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password })
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password }),
     });
 
     const contentType = res.headers.get("content-type") || "";
@@ -74,63 +77,193 @@ function logout() {
   window.location.href = "login.html";
 }
 
-
-
-
-// =Skapa en note
+/* =========================
+   BOARDS (optional helper)
+========================= */
 
 async function loadBoards() {
-  const token = localStorage.getItem('token')
-  const res = await fetch(`${apiURL}/boards`, {
-    headers: {
-      Authorization: `Bearer ${token}`
+  // If you later add a boards endpoint, this function will populate the select.
+  // For now, it leaves the static options in notes.html as-is.
+  const select = document.getElementById("board-select");
+  if (!select) return;
+
+  try {
+    const token = localStorage.getItem("token");
+    const res = await fetch(`${notesURL}/boards`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (!res.ok) {
+      // If boards endpoint doesn't exist, just skip silently
+      return;
     }
-  });
 
-  const boards = await res.json()
-  const select = document.getElementById('board-select')
-
-  boards.forEach(board => {
-    const option = document.getElementById('option')
-    option.value = board._id
-    option.textContent = board.title
-    select.appendChild(option)
-  });
+    const boards = await res.json();
+    // Keep the first "Välj en board" option, then add dynamic ones
+    boards.forEach((board) => {
+      const option = document.createElement("option");
+      option.value = board._id || board.id || board.slug || board.title || "";
+      option.textContent = board.title || board.name || option.value;
+      select.appendChild(option);
+    });
+  } catch (e) {
+    // Non-fatal if boards aren't supported
+    console.warn("Kunde inte ladda boards:", e);
+  }
 }
+
+/* =========================
+   NOTES
+========================= */
 
 async function fetchNotes() {
   try {
     const res = await fetch(`${notesURL}/notes`, {
       headers: {
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      } 
-    })
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+    });
 
     if (!res.ok) {
-      throw new Error('Kunde inte hämta notes')
+      throw new Error("Kunde inte hämta notes");
     }
 
-    const notes = await res.json()
+    const contentType = res.headers.get("content-type") || "";
+    const notes = contentType.includes("application/json")
+      ? await res.json()
+      : [];
 
-    const notesContainer = document.getElementById('notes-container')
-    notesContainer.innerHTML =''
+    const notesContainer = document.getElementById("notes-container");
+    if (!notesContainer) return;
 
-    notes.forEach(note => {
-      console.log(note.id, note.x, note.y)
-      const noteDiv = document.createElement('div')
-      noteDiv.className = 'note'
-      noteDiv.style.backgroundColor = note.color
-      noteDiv.style.position = 'absolute'
-      noteDiv.style.left = note.x + 'px'
-      noteDiv.style.top = note.y + 'px'
-      noteDiv.textContent = note.content
-      notesContainer.appendChild(noteDiv)
-    })
+    notesContainer.innerHTML = "";
+
+    notes.forEach((note) => {
+      const id = note.id || note._id;
+
+      const noteDiv = document.createElement("div");
+      noteDiv.id = `note-${id}`;
+      noteDiv.className = "note";
+      noteDiv.style.backgroundColor = note.color || "#ffd972";
+      noteDiv.style.position = "absolute";
+      noteDiv.style.left = (note.x ?? 100) + "px";
+      noteDiv.style.top = (note.y ?? 100) + "px";
+
+      // Content
+      const contentEl = document.createElement("div");
+      contentEl.className = "note-content";
+      contentEl.textContent = note.content || "";
+      noteDiv.appendChild(contentEl);
+
+      // Delete button (inside the loop, has access to the correct id)
+      const delBtn = document.createElement("button");
+      delBtn.className = "delete-btn";
+      delBtn.type = "button";
+      delBtn.setAttribute("aria-label", "Radera note");
+      delBtn.textContent = "×";
+      delBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        deleteNote(id);
+      });
+      noteDiv.appendChild(delBtn);
+
+      notesContainer.appendChild(noteDiv);
+    });
   } catch (error) {
-    console.error(error)
-    alert('Fel vid hämtning av notes')
+    console.error(error);
+    alert("Fel vid hämtning av notes");
   }
 }
+
+async function createNote() {
+  const boardId = document.getElementById("board-select")?.value;
+  const content = document.getElementById("new-note").value.trim();
+  const token = localStorage.getItem("token");
+
+  if (!token) {
+    alert("Du är inte inloggad.");
+    window.location.href = "login.html";
+    return;
+  }
+  if (!content) {
+    alert("Skriv något först!");
+    return;
+  }
+
+  try {
+    const res = await fetch(`${notesURL}/notes`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        boardId: boardId || "board-a",
+        content,
+        x: Math.floor(Math.random() * 400) + 50,
+        y: Math.floor(Math.random() * 400) + 50,
+        color: "#ffd972",
+      }),
+    });
+
+    const contentType = res.headers.get("content-type") || "";
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(`Kunde inte skapa note: ${res.status} - ${errText}`);
+    }
+
+    // Re-render notes so the new one appears
+    await fetchNotes();
+
+    // Clear input
+    const input = document.getElementById("new-note");
+    if (input) input.value = "";
+    alert("Note skapad!");
+  } catch (err) {
+    console.error("Create note error:", err);
+    alert(err.message);
+  }
+}
+
+async function deleteNote(id) {
+  const token = localStorage.getItem("token");
+  if (!token) {
+    alert("Du är inte inloggad.");
+    window.location.href = "login.html";
+    return;
+  }
+
+  if (!confirm("Radera den här lappen?")) return;
+
+  try {
+    const res = await fetch(`${notesURL}/notes/${encodeURIComponent(id)}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (res.ok || res.status === 204) {
+      // Remove from DOM
+      const el = document.getElementById(`note-${id}`);
+      if (el) el.remove();
+
+      // If you prefer to always sync with server (e.g., after cascading deletes):
+      // await fetchNotes();
+    } else {
+      const txt = await res.text().catch(() => "");
+      throw new Error(`Kunde inte radera note: ${res.status} - ${txt}`);
+    }
+  } catch (err) {
+    console.error("Delete note error:", err);
+    alert(err.message);
+  }
+}
+
+
+
+
+
+
+
 
 async function createNote() {
 
@@ -178,5 +311,58 @@ async function createNote() {
     alert(err.message);
   }
 }
+
+
+// RADERA NOTE
+
+async function deleteNote(id) {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    alert('Du är inte inloggad.');
+    window.location.href = 'login.html';
+    return;
+  }
+
+  if (!confirm('Radera den här lappen?')) return;
+
+  try {
+    const res = await fetch(`${notesURL}/notes/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    if (res.ok || res.status === 204) {
+      
+      const el = document.getElementById(`note-${id}`);
+      if (el) el.remove();
+
+     
+    } else {
+      const txt = await res.text().catch(()=> '');
+      throw new Error(`Kunde inte radera note: ${res.status} - ${txt}`);
+    }
+  } catch (err) {
+    console.error('Delete note error:', err);
+    alert(err.message);
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
