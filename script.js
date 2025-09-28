@@ -274,10 +274,11 @@ async function stopDrag(e) {
   document.removeEventListener("mousemove", onDrag)
   document.removeEventListener("mouseup", stopDrag)
 
-  const noteId = draggedNote.dataset.id
+  const noteElement = draggedNote.closest('.note')
+  const noteId = noteElement?.dataset.id
   const newX = parseInt(draggedNote.style.left)
   const newY = parseInt(draggedNote.style.top)
-  
+
   try {
     const res = await fetch(`${notesURL}/notes/${noteId}/position`, {
       method: "POST",
