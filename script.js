@@ -105,9 +105,8 @@ async function loadBoards() {
     console.warn("Kunde inte ladda boards:", e);
   }
 }
-
-
  
+//Hämtar alla notes och visar dom
 
 async function fetchNotes() {
   try {
@@ -166,7 +165,18 @@ async function fetchNotes() {
     console.error(error);
     alert("Fel vid hämtning av notes");
   }
+
+  noteDiv.dataset.id = id;
+
+  const notes = document.querySelectorAll('.note')
+
+  notes.forEach(note => {
+  note.addEventListener("mousedown", startDrag)
+})
+
 }
+
+//Skapa note
 
 async function createNote() {
   const boardId = document.getElementById("board-select")?.value;
@@ -205,10 +215,8 @@ async function createNote() {
       throw new Error(`Kunde inte skapa note: ${res.status} - ${errText}`);
     }
 
-   
     await fetchNotes();
 
-   
     const input = document.getElementById("new-note");
     if (input) input.value = "";
     alert("Note skapad!");
@@ -247,6 +255,48 @@ async function deleteNote(id) {
     console.error("Delete note error:", err);
     alert(err.message);
   }
+}
+
+//Drag and drop
+
+let offsetX, offsetY, draggedNote
+
+function startDrag(e) {
+  draggedNote = e.target
+  offsetX = e.clientX - draggedNote.offsetLeft
+  offsetY = e.clientY - draggedNote.offsetTop
+  document.addEventListener("mousemove", onDrag)
+  document.addEventListener("mouseup", stopDrag)
+}
+
+function onDrag(e) {
+  if (!draggedNote) return
+  draggedNote.style.left = `${e.clientX- offsetX}px`
+  draggedNote.style.top = `${e.clientY- offsetY}px`
+} 
+
+function stopDrag(e) {
+  if(!draggedNote) return
+
+  document.removeEventListener("mousemove", onDrag)
+  document.removeEventListener("mouseup", stopDrag)
+
+  const noteId = draggedNote.dataset.id
+  const newX = parseInt(draggedNote.style.left)
+  const newY = parseInt(draggedNote.style.top)
+
+  fetch(`${notesURL}/notes/${noteId}/position`, {
+    method: "POST",
+    headers: { 
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${localStorage.getItem("token")}`
+
+    },
+    body: JSON.stringify({ x: newX, y: newY })
+  });
+
+  draggedNote = null;
+
 }
 
 
