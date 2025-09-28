@@ -85,7 +85,7 @@ button:active { transform: translateY(1px); }
   padding: 12px 14px 14px;
   border-radius: 10px;
   box-shadow: 0 8px 16px rgba(0,0,0,.15);
-  cursor: default;
+  cursor: move;
   word-wrap: break-word;
   transform: translateZ(0);       /* Ny layer, smoother shadows */
 }

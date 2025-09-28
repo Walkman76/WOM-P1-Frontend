@@ -140,6 +140,7 @@ async function fetchNotes() {
       noteDiv.style.position = "absolute";
       noteDiv.style.left = (note.x ?? 100) + "px";
       noteDiv.style.top = (note.y ?? 100) + "px";
+      noteDiv.dataset.id = id;
 
       // Content
       const contentEl = document.createElement("div");
@@ -160,20 +161,17 @@ async function fetchNotes() {
       noteDiv.appendChild(delBtn);
 
       notesContainer.appendChild(noteDiv);
+
+      const notes = document.querySelectorAll('.note')
+
+      notes.forEach(note => {
+      note.addEventListener("mousedown", startDrag)
+})
     });
   } catch (error) {
     console.error(error);
     alert("Fel vid hämtning av notes");
   }
-
-  noteDiv.dataset.id = id;
-
-  const notes = document.querySelectorAll('.note')
-
-  notes.forEach(note => {
-  note.addEventListener("mousedown", startDrag)
-})
-
 }
 
 //Skapa note
